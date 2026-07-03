@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Daily Focus</title>
+<style>
+  :root{
+    /* Light theme — the original palette */
+    --bg:linear-gradient(160deg,#F4F6FC 0%,#FBF8F3 100%);
+    --card:#ffffff;
+    --ink:#16233B; --inkSoft:#5A6580; --line:#E5E8F1;
+    --accent:#0E8A74; --accentDeep:#0B6B5A; --gold:#DFA236; --goldDeep:#B9821E;
+    --track:#EEF0F7; --rowHover:#F7F8FC;
+    --boxBorder:#C7CDDD; --boxBg:#ffffff;
+    --placeholder:#AEB5C7; --doneText:#9AA2B4; --strike:#C7CDDD; --del:#C2C8D6;
+    --addHover:#EEF6F4;
+    --quoteBg:linear-gradient(135deg,#F1F7F5 0%,#FBF6EC 100%); --quoteBorder:#EAEFEC;
+    --confirmBg:#FBEBEA; --confirmText:#C0463F; --confirmBgHover:#F6DCDA;
+    --toggleTrack:#E5E8F1; --knob:#ffffff;
+    --shadow:0 18px 50px -28px rgba(22,35,59,.28);
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Times New Roman',serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  [data-theme="dark"]{
+    /* Dark theme — derived from the light navy/teal/gold identity */
+    --bg:linear-gradient(160deg,#0E141F 0%,#12151C 100%);
+    --card:#182031;
+    --ink:#ECEFF7; --inkSoft:#9BA6BE; --line:#2A3450;
+    --accent:#17B89A; --accentDeep:#33CFB3; --gold:#E4AE4A; --goldDeep:#F1C36A;
+    --track:#222C43; --rowHover:#1E2740;
+    --boxBorder:#3A4661; --boxBg:#1E273B;
+    --placeholder:#69738F; --doneText:#79839B; --strike:#3A4661; --del:#5C6785;
+    --addHover:rgba(23,184,154,.14);
+    --quoteBg:linear-gradient(135deg,#142624 0%,#231F13 100%); --quoteBorder:#2B3937;
+    --confirmBg:rgba(224,102,102,.16); --confirmText:#F09B94; --confirmBgHover:rgba(224,102,102,.26);
+    --toggleTrack:#2A3450; --knob:#ECEFF7;
+    --shadow:0 18px 50px -22px rgba(0,0,0,.6);
+  }
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);font-family:var(--sans);color:var(--ink);
+    padding:28px 16px;box-sizing:border-box;min-height:100%;transition:color .3s ease}
+  .df-card{max-width:580px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:22px;
+    box-shadow:var(--shadow);overflow:hidden;transition:background .3s ease,border-color .3s ease}
+  .df-pad{padding:30px 32px}
+  .df-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .df-head-right{display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+  .df-eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--inkSoft);font-weight:600;margin:0}
+  .df-weekday{font-family:var(--serif);font-size:40px;line-height:1;letter-spacing:-.01em;margin:8px 0 4px;color:var(--ink)}
+  .df-date{font-size:14px;color:var(--inkSoft);margin:0}
+  .df-count{display:inline-flex;align-items:baseline;gap:5px;border:1px solid var(--line);border-radius:999px;
+    padding:7px 14px;font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+  .df-count b{font-size:16px;color:var(--accentDeep)}
+  .df-count.done b{color:var(--goldDeep)}
+  .df-toggle{position:relative;width:52px;height:28px;flex:none;border-radius:999px;border:1px solid var(--line);
+    background:var(--toggleTrack);cursor:pointer;padding:0;transition:background .3s ease,border-color .3s ease}
+  .df-knob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--knob);
+    box-shadow:0 1px 3px rgba(0,0,0,.28);display:grid;place-items:center;
+    transition:transform .3s cubic-bezier(.22,.61,.36,1),background .3s ease}
+  [data-theme="dark"] .df-knob{transform:translateX(24px)}
+  .df-knob svg{width:14px;height:14px}
+  .df-knob .df-sun{display:block;color:var(--goldDeep)}
+  .df-knob .df-moon{display:none;color:#2A3450}
+  [data-theme="dark"] .df-knob .df-sun{display:none}
+  [data-theme="dark"] .df-knob .df-moon{display:block}
+  .df-track{height:9px;border-radius:999px;background:var(--track);overflow:hidden;margin-top:20px}
+  .df-fill{height:100%;border-radius:999px;width:0%;background:linear-gradient(90deg,var(--accent),var(--accentDeep));
+    transition:width .5s cubic-bezier(.22,.61,.36,1),background .4s}
+  .df-fill.done{background:linear-gradient(90deg,var(--gold),var(--goldDeep))}
+  .df-status{margin:10px 2px 0;font-size:12.5px;color:var(--inkSoft);min-height:16px}
+  .df-list{margin:24px 0 4px;display:flex;flex-direction:column;gap:2px}
+  .df-row{display:flex;align-items:center;gap:12px;padding:9px 6px;border-radius:12px;transition:background .15s}
+  .df-row:hover{background:var(--rowHover)}
+  .df-box{flex:none;width:23px;height:23px;border-radius:7px;border:2px solid var(--boxBorder);background:var(--boxBg);
+    display:grid;place-items:center;cursor:pointer;transition:all .18s;padding:0}
+  .df-box:hover:not(:disabled){border-color:var(--accent)}
+  .df-box:disabled{cursor:default;opacity:.5}
+  .df-box[data-done="true"]{background:var(--accent);border-color:var(--accent)}
+  .df-box svg{opacity:0;transform:scale(.6);transition:all .18s}
+  .df-box[data-done="true"] svg{opacity:1;transform:scale(1)}
+  .df-input{flex:1;border:none;background:transparent;font-family:var(--sans);font-size:16px;color:var(--ink);
+    padding:4px 0;outline:none;min-width:0}
+  .df-input::placeholder{color:var(--placeholder)}
+  .df-input[data-done="true"]{color:var(--doneText);text-decoration:line-through;text-decoration-color:var(--strike)}
+  .df-del{flex:none;border:none;background:transparent;color:var(--del);cursor:pointer;font-size:18px;line-height:1;
+    padding:4px 6px;border-radius:6px;opacity:0;transition:opacity .15s,color .15s}
+  .df-row:hover .df-del{opacity:1}
+  .df-del:hover{color:#E06666}
+  .df-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;flex-wrap:wrap}
+  .df-add{border:none;background:transparent;color:var(--accentDeep);font-family:var(--sans);font-size:14px;
+    font-weight:600;cursor:pointer;padding:8px 6px;border-radius:8px}
+  .df-add:hover{background:var(--addHover)}
+  .df-add:disabled{color:var(--placeholder);cursor:default;background:transparent}
+  .df-reset{border:none;background:transparent;color:var(--placeholder);font-family:var(--sans);font-size:13px;cursor:pointer;
+    padding:8px 6px;border-radius:8px;transition:color .15s}
+  .df-reset:hover{color:#D9645E}
+  .df-confirm{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--inkSoft)}
+  .df-cy{border:none;background:var(--confirmBg);color:var(--confirmText);font-family:var(--sans);font-size:13px;font-weight:600;
+    cursor:pointer;padding:6px 12px;border-radius:8px}
+  .df-cy:hover{background:var(--confirmBgHover)}
+  .df-cn{border:none;background:transparent;color:var(--inkSoft);font-family:var(--sans);font-size:13px;cursor:pointer;
+    padding:6px 8px;border-radius:8px}
+  .df-cn:hover{color:var(--ink)}
+  .df-foot-right{display:flex;align-items:center;gap:4px}
+  .df-hist{border:none;background:transparent;color:var(--accentDeep);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;padding:8px 8px;border-radius:8px;transition:background .15s}
+  .df-hist:hover{background:var(--addHover)}
+  .df-hist-head{display:flex;align-items:center;gap:14px;margin-bottom:2px}
+  .df-back{border:none;background:transparent;color:var(--accentDeep);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;padding:6px 10px 6px 0;border-radius:8px}
+  .df-back:hover{color:var(--ink)}
+  .df-hist-list{display:flex;flex-direction:column;gap:16px;margin-top:18px;max-height:60vh;overflow-y:auto}
+  .df-day{border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .df-day-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:11px}
+  .df-day-wd{font-family:var(--serif);font-size:19px;line-height:1.1;color:var(--ink)}
+  .df-day-dt{font-size:12.5px;color:var(--inkSoft);margin-top:2px}
+  .df-day-count{font-size:12px;color:var(--inkSoft);border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .df-day-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+  .df-item{display:flex;align-items:center;gap:10px;font-size:14.5px;color:var(--ink)}
+  .df-item[data-done="true"]{color:var(--doneText);text-decoration:line-through;text-decoration-color:var(--strike)}
+  .df-dot{flex:none;width:14px;height:14px;border-radius:5px;border:2px solid var(--boxBorder);box-sizing:border-box}
+  .df-dot[data-done="true"]{background:var(--accent);border-color:var(--accent)}
+  .df-quote{margin:26px 32px 30px;background:var(--quoteBg);border:1px solid var(--quoteBorder);
+    border-radius:16px;padding:20px 22px;display:flex;gap:16px;align-items:center;transition:background .3s ease,border-color .3s ease}
+  .df-qtext{font-family:var(--serif);font-style:italic;font-size:16.5px;line-height:1.45;color:var(--ink);margin:0}
+  .df-qauthor{font-size:12.5px;letter-spacing:.02em;color:var(--inkSoft);margin:7px 0 0}
+  .df-focusring:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media (max-width:520px){.df-pad{padding:24px 20px}.df-weekday{font-size:33px}.df-quote{margin:22px 20px 24px}}
+  @media (prefers-reduced-motion:reduce){.df-fill,.df-box,.df-box svg,.df-del,.df-knob,.df-card,.df-quote,body,.df-toggle{transition:none}}
+</style>
+</head>
+<body>
+  <div class="df-card">
+    <div id="todayView">
+    <div class="df-pad">
+      <div class="df-head">
+        <div>
+          <p class="df-eyebrow">Today&rsquo;s focus</p>
+          <h1 class="df-weekday" id="weekday"></h1>
+          <p class="df-date" id="dateline"></p>
+        </div>
+        <div class="df-head-right">
+          <button id="themetoggle" class="df-toggle df-focusring" role="switch" aria-checked="false" aria-label="Toggle dark mode">
+            <span class="df-knob">
+              <svg class="df-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+              <svg class="df-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+            </span>
+          </button>
+          <span id="count" class="df-count"><b id="cdone">0</b>/ <span id="ctotal">0</span> done</span>
+        </div>
+      </div>
+
+      <div class="df-track" id="track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Daily progress">
+        <div class="df-fill" id="fill"></div>
+      </div>
+      <p class="df-status" id="status"></p>
+
+      <div class="df-list" id="list"></div>
+
+      <div class="df-foot">
+        <button id="addbtn" class="df-add df-focusring">+ Add a priority</button>
+        <div class="df-foot-right">
+          <button id="histbtn" class="df-hist df-focusring">History</button>
+          <button id="resetbtn" class="df-reset df-focusring">Reset today</button>
+          <span id="confirm" class="df-confirm" style="display:none">Clear today&rsquo;s list?
+            <button id="resetyes" class="df-cy df-focusring">Reset</button>
+            <button id="resetno" class="df-cn df-focusring">Cancel</button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="df-quote">
+      <div id="motif" style="flex:none"></div>
+      <div>
+        <p class="df-qtext" id="qtext"></p>
+        <p class="df-qauthor" id="qauthor"></p>
+      </div>
+    </div>
+    </div>
+
+    <div id="historyView" style="display:none">
+      <div class="df-pad">
+        <div class="df-hist-head">
+          <button id="backbtn" class="df-back df-focusring">&larr; Today</button>
+          <span class="df-eyebrow">History</span>
+        </div>
+        <div id="histbody"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---- Theme (light / dark) ---- */
+  var THEME_KEY = "focus:theme";
+  function preferredTheme(){
+    try{ var v = localStorage.getItem(THEME_KEY); if(v==="dark"||v==="light") return v; }catch(e){}
+    return (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  }
+  function applyTheme(mode){
+    document.documentElement.setAttribute("data-theme", mode);
+    var tg = document.getElementById("themetoggle");
+    if(tg) tg.setAttribute("aria-checked", mode==="dark" ? "true" : "false");
+  }
+  var theme = preferredTheme();
+  applyTheme(theme);
+  document.getElementById("themetoggle").addEventListener("click", function(){
+    theme = theme==="dark" ? "light" : "dark";
+    applyTheme(theme);
+    try{ localStorage.setItem(THEME_KEY, theme); }catch(e){}
+  });
+
+  var QUOTES = [
+    {t:"Well done is better than well said.", a:"Benjamin Franklin"},
+    {t:"The secret of getting ahead is getting started.", a:"Mark Twain"},
+    {t:"It always seems impossible until it's done.", a:"Nelson Mandela"},
+    {t:"Do the hard jobs first. The easy jobs take care of themselves.", a:"Dale Carnegie"},
+    {t:"Amateurs sit and wait for inspiration; the rest of us just get up and go to work.", a:"Stephen King"},
+    {t:"Action is the foundational key to all success.", a:"Pablo Picasso"},
+    {t:"Simplicity is the soul of efficiency.", a:"Austin Freeman"},
+    {t:"What you do today can improve all your tomorrows.", a:"Ralph Marston"},
+    {t:"The way to get started is to quit talking and begin doing.", a:"Walt Disney"},
+    {t:"Focus on being productive instead of busy.", a:"Tim Ferriss"},
+    {t:"You don't have to see the whole staircase, just take the first step.", a:"Martin Luther King Jr."},
+    {t:"Small deeds done are better than great deeds planned.", a:"Peter Marshall"},
+    {t:"Start where you are. Use what you have. Do what you can.", a:"Arthur Ashe"},
+    {t:"Discipline is choosing between what you want now and what you want most.", a:"Abraham Lincoln"},
+    {t:"Motivation gets you going; habit keeps you growing.", a:"John Maxwell"},
+    {t:"Either you run the day or the day runs you.", a:"Jim Rohn"},
+    {t:"The best way to predict the future is to create it.", a:"Peter Drucker"},
+    {t:"A year from now you may wish you had started today.", a:"Karen Lamb"},
+    {t:"Quality is not an act, it is a habit.", a:"Aristotle"},
+    {t:"Great things are done by a series of small things brought together.", a:"Vincent van Gogh"},
+    {t:"Done is better than perfect.", a:"Sheryl Sandberg"},
+    {t:"The future depends on what you do today.", a:"Mahatma Gandhi"},
+    {t:"Ordinary things, done consistently, produce extraordinary results.", a:"Anonymous"},
+    {t:"You miss 100% of the shots you don't take.", a:"Wayne Gretzky"}
+  ];
+  var MOTIFS = ["sun","mountain","leaf","wave","star","seedling"];
+  var MAX = 7, START_ROWS = 5;
+
+  function dayOfYear(d){ var s=new Date(d.getFullYear(),0,0); return Math.floor((d-s)/86400000); }
+  function todayKey(){ var d=new Date(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0"); return "focus:"+d.getFullYear()+"-"+m+"-"+day; }
+  function newId(){ return (window.crypto&&crypto.randomUUID)?crypto.randomUUID():Math.random().toString(36).slice(2); }
+  function emptyRows(n){ var a=[]; for(var i=0;i<n;i++) a.push({id:newId(),text:"",done:false}); return a; }
+
+  function carryFrom(prev){
+    var carried = (Array.isArray(prev)?prev:[])
+      .filter(function(t){ return t && !t.done && (t.text||"").trim().length>0; })
+      .slice(0,MAX)
+      .map(function(t){ return {id:newId(),text:t.text,done:false}; });
+    var rows = carried.slice();
+    while(rows.length<START_ROWS && rows.length<MAX) rows.push({id:newId(),text:"",done:false});
+    return rows.length?rows:emptyRows(START_ROWS);
+  }
+
+  var KEY = todayKey();
+
+  function loadTasks(){
+    try{
+      var cur = localStorage.getItem(KEY);
+      if(cur){ var p=JSON.parse(cur); if(Array.isArray(p)&&p.length) return p; }
+      var keys=[];
+      for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(/^focus:\d{4}-\d{2}-\d{2}$/.test(k)&&k!==KEY) keys.push(k); }
+      keys.sort();
+      if(keys.length){ return carryFrom(JSON.parse(localStorage.getItem(keys[keys.length-1]))); }
+    }catch(e){ /* storage unavailable — run in-memory */ }
+    return emptyRows(START_ROWS);
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(tasks)); }catch(e){} }
+
+  function motifSVG(kind){
+    // Base stroke props live on the <svg> so paths inherit them; theme colors come
+    // from CSS variables via inline style so the motif re-themes with the toggle.
+    var base='width="44" height="44" style="stroke:var(--accentDeep);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round"';
+    var g='style="stroke:var(--gold)"';
+    if(kind==="mountain") return '<svg viewBox="0 0 40 40" '+base+'><path d="M4 32 L15 12 L22 24 L28 16 L36 32 Z"/><path d="M12 17 L15 12 L18 17" '+g+'/></svg>';
+    if(kind==="leaf") return '<svg viewBox="0 0 40 40" '+base+'><path d="M8 32 C8 16 24 8 32 8 C32 24 20 32 8 32 Z"/><path d="M8 32 C16 26 24 18 30 12"/></svg>';
+    if(kind==="wave") return '<svg viewBox="0 0 40 40" '+base+'><path d="M4 16 C10 10 14 22 20 16 C26 10 30 22 36 16"/><path d="M4 26 C10 20 14 32 20 26 C26 20 30 32 36 26" '+g+'/></svg>';
+    if(kind==="star") return '<svg viewBox="0 0 40 40" '+base+'><path d="M20 6 L23.5 15 L33 15.5 L25.5 21.5 L28 31 L20 25.5 L12 31 L14.5 21.5 L7 15.5 L16.5 15 Z" '+g+'/></svg>';
+    if(kind==="seedling") return '<svg viewBox="0 0 40 40" '+base+'><path d="M20 34 L20 20"/><path d="M20 22 C12 22 8 16 8 10 C16 10 20 15 20 22 Z"/><path d="M20 20 C28 20 32 14 32 8 C24 8 20 13 20 20 Z" '+g+'/></svg>';
+    var rays=""; var angles=[0,45,90,135,180,225,270,315];
+    for(var i=0;i<angles.length;i++){ var r=angles[i]*Math.PI/180; rays+='<line x1="'+(20+Math.cos(r)*12)+'" y1="'+(20+Math.sin(r)*12)+'" x2="'+(20+Math.cos(r)*16)+'" y2="'+(20+Math.sin(r)*16)+'" '+g+'/>'; }
+    return '<svg viewBox="0 0 40 40" '+base+'><circle cx="20" cy="20" r="7"/>'+rays+'</svg>';
+  }
+
+  var tasks = loadTasks();
+
+  var listEl = document.getElementById("list");
+  var fillEl = document.getElementById("fill");
+  var trackEl = document.getElementById("track");
+  var cdEl = document.getElementById("cdone");
+  var ctEl = document.getElementById("ctotal");
+  var countEl = document.getElementById("count");
+  var statusEl = document.getElementById("status");
+  var addBtn = document.getElementById("addbtn");
+
+  function updateProgress(){
+    var listed = tasks.filter(function(t){ return t.text.trim().length>0; });
+    var total = listed.length;
+    var done = listed.filter(function(t){ return t.done; }).length;
+    var pct = total ? Math.round(done/total*100) : 0;
+    var allDone = total>0 && done===total;
+    fillEl.style.width = pct+"%";
+    fillEl.classList.toggle("done", allDone);
+    cdEl.textContent = done; ctEl.textContent = total;
+    countEl.classList.toggle("done", allDone);
+    trackEl.setAttribute("aria-valuenow", pct);
+    statusEl.textContent = total===0
+      ? "Add your priorities below to begin."
+      : allDone ? "All "+total+" done — nicely handled."
+      : pct+"% complete \u00B7 "+(total-done)+" to go";
+    addBtn.disabled = tasks.length>=MAX;
+    addBtn.textContent = tasks.length>=MAX ? "Seven is the limit for today" : "+ Add a priority";
+  }
+
+  function buildList(){
+    listEl.innerHTML="";
+    tasks.forEach(function(t,i){
+      var row=document.createElement("div"); row.className="df-row";
+
+      var box=document.createElement("button");
+      box.className="df-box df-focusring";
+      box.innerHTML='<svg width="13" height="13" viewBox="0 0 14 14"><path d="M2 7.5 L5.5 11 L12 3.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      var input=document.createElement("input");
+      input.className="df-input"; input.value=t.text; input.placeholder="Priority "+(i+1);
+      input.setAttribute("aria-label","Priority "+(i+1));
+      var del=document.createElement("button");
+      del.className="df-del df-focusring"; del.innerHTML="&times;"; del.setAttribute("aria-label","Remove this priority");
+
+      function refreshRow(){
+        var has=t.text.trim().length>0;
+        box.setAttribute("data-done", t.done?"true":"false");
+        box.disabled=!has;
+        input.setAttribute("data-done", t.done?"true":"false");
+      }
+      refreshRow();
+
+      input.addEventListener("input", function(){ t.text=input.value; refreshRow(); updateProgress(); save(); });
+      box.addEventListener("click", function(){ if(t.text.trim().length===0) return; t.done=!t.done; refreshRow(); updateProgress(); save(); });
+      del.addEventListener("click", function(){
+        if(tasks.length<=1) return;
+        tasks = tasks.filter(function(x){ return x.id!==t.id; });
+        buildList(); updateProgress(); save();
+      });
+
+      row.appendChild(box); row.appendChild(input); row.appendChild(del);
+      listEl.appendChild(row);
+    });
+  }
+
+  addBtn.addEventListener("click", function(){
+    if(tasks.length>=MAX) return;
+    tasks.push({id:newId(),text:"",done:false});
+    buildList(); updateProgress(); save();
+  });
+
+  var resetBtn=document.getElementById("resetbtn"), confirmEl=document.getElementById("confirm");
+  resetBtn.addEventListener("click", function(){ resetBtn.style.display="none"; confirmEl.style.display="inline-flex"; });
+  document.getElementById("resetno").addEventListener("click", function(){ confirmEl.style.display="none"; resetBtn.style.display=""; });
+  document.getElementById("resetyes").addEventListener("click", function(){
+    tasks=emptyRows(START_ROWS); buildList(); updateProgress(); save();
+    confirmEl.style.display="none"; resetBtn.style.display="";
+  });
+
+  // History
+  function fmtKey(k){
+    var p=k.replace("focus:","").split("-");
+    var dt=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
+    return { wd: dt.toLocaleDateString(undefined,{weekday:"long"}), dt: dt.toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}) };
+  }
+  function escapeText(s){ var d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+  var todayView=document.getElementById("todayView"), historyView=document.getElementById("historyView"), histBody=document.getElementById("histbody");
+
+  function populateHistory(){
+    var keys=[];
+    try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(/^focus:\d{4}-\d{2}-\d{2}$/.test(k)&&k!==KEY) keys.push(k); } }catch(e){}
+    keys.sort().reverse();
+    var days=[];
+    for(var j=0;j<keys.length;j++){
+      try{
+        var arr=JSON.parse(localStorage.getItem(keys[j]));
+        var items=(Array.isArray(arr)?arr:[]).filter(function(t){ return t && (t.text||"").trim().length>0; });
+        if(items.length) days.push({key:keys[j], items:items});
+      }catch(e){}
+    }
+    if(!days.length){
+      histBody.innerHTML='<p class="df-status" style="margin-top:18px">No past days saved yet. Your history builds up as you use the dashboard from one day to the next.</p>';
+      return;
+    }
+    var html='<div class="df-hist-list">';
+    days.forEach(function(d){
+      var f=fmtKey(d.key);
+      var done=d.items.filter(function(t){return t.done;}).length;
+      html+='<div class="df-day"><div class="df-day-head"><div><div class="df-day-wd">'+f.wd+'</div><div class="df-day-dt">'+f.dt+'</div></div><span class="df-day-count">'+done+'/'+d.items.length+' done</span></div><ul class="df-day-items">';
+      d.items.forEach(function(t){
+        var dn=t.done?"true":"false";
+        html+='<li class="df-item" data-done="'+dn+'"><span class="df-dot" data-done="'+dn+'"></span><span>'+escapeText(t.text)+'</span></li>';
+      });
+      html+='</ul></div>';
+    });
+    html+='</div>';
+    histBody.innerHTML=html;
+  }
+
+  document.getElementById("histbtn").addEventListener("click", function(){ populateHistory(); todayView.style.display="none"; historyView.style.display=""; });
+  document.getElementById("backbtn").addEventListener("click", function(){ historyView.style.display="none"; todayView.style.display=""; });
+
+  // Header + quote (set once for the day)
+  var now=new Date();
+  document.getElementById("weekday").textContent = now.toLocaleDateString(undefined,{weekday:"long"});
+  document.getElementById("dateline").textContent = now.toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"});
+  var q=QUOTES[dayOfYear(now)%QUOTES.length];
+  document.getElementById("qtext").textContent = "\u201C"+q.t+"\u201D";
+  document.getElementById("qauthor").textContent = "\u2014 "+q.a;
+  document.getElementById("motif").innerHTML = motifSVG(MOTIFS[dayOfYear(now)%MOTIFS.length]);
+
+  buildList(); updateProgress(); save();
+})();
+</script>
+</body>
+</html>

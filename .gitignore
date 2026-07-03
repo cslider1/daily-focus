@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Editor backups
+*.bak
+
+# Dependencies / build output (if this project grows)
+node_modules/
+dist/
