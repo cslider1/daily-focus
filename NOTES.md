@@ -4,10 +4,10 @@ Working notes for the Daily Focus project and its setup. (For what the app *is*,
 
 ## Repository
 
-- **GitHub:** https://github.com/cslider1/daily-focus (private)
+- **GitHub:** https://github.com/cslider1/daily-focus (public)
 - **Default branch:** `main`
 - **Local folder:** `~/daily-focus` (a plain local folder — intentionally *not* in Downloads or iCloud Drive)
-- **Commit identity (repo-local):** cslider1 / cslider1@aol.com
+- **Commit email:** GitHub `noreply` (`<id>+cslider1@users.noreply.github.com`) — keeps a real email out of the public commit history while still attributing commits to the `cslider1` profile. This is now the global git default for future repos too.
 
 ### Why not iCloud Drive?
 GitHub is the cross-device sync. Keeping the git repo inside iCloud Drive risks
